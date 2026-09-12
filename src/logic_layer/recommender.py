@@ -19,7 +19,7 @@ from data_layer.db_utils import fetch_query
 try:
     from .filters import apply_filters
     from .similarity_engine import get_recommendations as calc_recommendations
-    from .feature_builder import get_series_data, clear_cache
+    from .feature_builder import get_series_data, clear_cache, preload_series_data
     from .config import TOP_N_DEFAULT, DEBUG_MODE, GENRE_ID_TO_NAME
 except ImportError:
     from filters import apply_filters
@@ -116,7 +116,14 @@ def get_recommendations(user_ratings, filters=None, top_n=None, weights=None):
     
     if DEBUG_MODE:
         print(f"[STEP 1] Found {len(candidate_ids)} candidates")
-    
+
+
+    # Step 1.5: Preload all relevant series data in bulk (avoids N+1 queries)
+    all_relevant_ids = list(set(candidate_ids) | set(uid for uid, _, _ in user_ratings))
+    preload_series_data(all_relevant_ids)
+
+
+
     # Step 2: Calculate recommendation scores
     if DEBUG_MODE:
         print("\n[STEP 2] Calculating similarities...")

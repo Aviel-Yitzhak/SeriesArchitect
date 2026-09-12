@@ -53,6 +53,58 @@ def clear_cache():
     _KEYWORDS_CACHE = {}
 
 
+
+def preload_series_data(tmdb_ids):
+    """
+    Bulk-loads series data, genres, and keywords for many IDs at once,
+    filling the caches so individual lookups become instant (no DB round-trip).
+    Dramatically reduces network round-trips when the DB is remote.
+    """
+    ids_to_fetch = list(set(tmdb_ids) - set(_SERIES_CACHE.keys()))
+    if not ids_to_fetch:
+        return
+
+    placeholders = ','.join(['%s'] * len(ids_to_fetch))
+
+    # 1. Bulk load series data
+    query = f"""
+        SELECT tmdb_id, title_en, overview, popularity, poster_path,
+               original_language, origin_country, status, adult,
+               first_air_date, last_air_date, number_of_seasons,
+               number_of_episodes, content_rating
+        FROM series WHERE tmdb_id IN ({placeholders})
+    """
+    rows = fetch_query(query, tuple(ids_to_fetch))
+    for row in rows:
+        _SERIES_CACHE[row[0]] = {
+            'tmdb_id': row[0], 'title_en': row[1], 'overview': row[2],
+            'popularity': row[3], 'poster_path': row[4], 'original_language': row[5],
+            'origin_country': row[6], 'status': row[7], 'adult': row[8],
+            'first_air_date': row[9], 'last_air_date': row[10],
+            'number_of_seasons': row[11], 'number_of_episodes': row[12],
+            'content_rating': row[13]
+        }
+
+    # 2. Bulk load genres
+    query_g = f"SELECT tmdb_id, genre_id FROM series_genres WHERE tmdb_id IN ({placeholders})"
+    genres_map = {}
+    for tid, gid in fetch_query(query_g, tuple(ids_to_fetch)):
+        genres_map.setdefault(tid, set()).add(gid)
+    for tid in ids_to_fetch:
+        _GENRES_CACHE[tid] = genres_map.get(tid, set())
+
+    # 3. Bulk load keywords (top N per config)
+    query_k = f"SELECT tmdb_id, keyword_id FROM series_keywords WHERE tmdb_id IN ({placeholders})"
+    keywords_map = {}
+    for tid, kid in fetch_query(query_k, tuple(ids_to_fetch)):
+        keywords_map.setdefault(tid, set()).add(kid)
+    for tid in ids_to_fetch:
+        _KEYWORDS_CACHE[(tid, TOP_KEYWORDS_COUNT)] = set(
+            list(keywords_map.get(tid, set()))[:TOP_KEYWORDS_COUNT]
+        )
+
+
+
 # =====================================
 # Data Fetching Functions
 # =====================================

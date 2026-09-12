@@ -66,7 +66,7 @@ SEASONS_DIFF_MAX = 5        # Maximum season difference for similarity
 # =====================================
 # Database Query Limits
 # =====================================
-MAX_CANDIDATES = 500      # Maximum series to consider (safety limit)
+MAX_CANDIDATES = 10000      # Maximum series to consider (safety limit)
 
 # =====================================
 # TMDB Reference Data (from actual database)
