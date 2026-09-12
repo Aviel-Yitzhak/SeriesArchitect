@@ -122,9 +122,9 @@ def get_series_data(tmdb_id):
 
     query = """
         SELECT tmdb_id, title_en, overview, popularity, poster_path,
-                original_language, origin_country, status, adult,
-                first_air_date, last_air_date, number_of_seasons,
-                number_of_episodes, content_rating, vote_average
+               original_language, origin_country, status, adult,
+               first_air_date, last_air_date, number_of_seasons,
+               number_of_episodes, content_rating, vote_average, embedding
         FROM series
         WHERE tmdb_id = %s
     """
@@ -150,7 +150,8 @@ def get_series_data(tmdb_id):
         'number_of_seasons': row[11],
         'number_of_episodes': row[12],
         'content_rating': row[13],
-        'vote_average': row[14]
+        'vote_average': row[14],
+        'embedding': row[15]
     }
     
     _SERIES_CACHE[tmdb_id] = data
@@ -446,7 +447,8 @@ def calculate_weighted_similarity(tmdb_id_a, tmdb_id_b, weights=None):
         'origin_country': calculate_origin_country_similarity(tmdb_id_a, tmdb_id_b),
         'popularity': calculate_popularity_similarity(tmdb_id_a, tmdb_id_b),
         'content_rating': calculate_content_rating_similarity(tmdb_id_a, tmdb_id_b),
-        'number_of_seasons': calculate_seasons_similarity(tmdb_id_a, tmdb_id_b)
+        'number_of_seasons': calculate_seasons_similarity(tmdb_id_a, tmdb_id_b),
+        'embedding': calculate_embedding_similarity(tmdb_id_a, tmdb_id_b),
     }
     
     # Calculate weighted sum
@@ -490,3 +492,40 @@ def calculate_similarities_batch(reference_id, candidate_ids, weights=None):
         results.append((candidate_id, similarity))
     
     return results
+
+def _parse_vector(raw):
+    """Converts the raw string/list returned from pgvector into a numpy array."""
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        return np.array([float(x) for x in raw.strip('[]').split(',')])
+    return np.array(raw)
+
+
+def calculate_embedding_similarity(tmdb_id_a, tmdb_id_b):
+    """
+    Calculate semantic similarity using AI embeddings (cosine similarity).
+    Captures tone/theme similarity that genres/keywords miss.
+    """
+    data_a = get_series_data(tmdb_id_a)
+    data_b = get_series_data(tmdb_id_b)
+
+    if not data_a or not data_b:
+        return 0.0
+
+    vec_a = _parse_vector(data_a.get('embedding'))
+    vec_b = _parse_vector(data_b.get('embedding'))
+
+    if vec_a is None or vec_b is None:
+        return 0.0
+
+    norm_a = np.linalg.norm(vec_a)
+    norm_b = np.linalg.norm(vec_b)
+
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+
+    cosine = np.dot(vec_a, vec_b) / (norm_a * norm_b)
+
+    # Cosine similarity ranges -1..1, normalize to 0..1 to match other features
+    return float((cosine + 1) / 2)

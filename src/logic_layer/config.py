@@ -9,13 +9,14 @@ Centralizing these values makes it easy to tune the algorithm without changing c
 # Feature Weights (Must sum to 1.0)
 # =====================================
 FEATURE_WEIGHTS = {
-    'genres': 0.30,              # Genre overlap (Jaccard similarity)
-    'keywords': 0.35,            # Keywords/themes overlap (Top-K Jaccard)
-    'year_proximity': 0.10,      # Release year/decade proximity
-    'origin_country': 0.10,      # Same production country
-    'popularity': 0.08,          # Similar popularity level
-    'content_rating': 0.04,      # Similar age rating
-    'number_of_seasons': 0.03    # Similar length
+    'genres': 0.20,               # Genre overlap (Jaccard similarity)
+    'keywords': 0.20,             # Keywords/themes overlap (Top-K Jaccard)
+    'embedding': 0.30,            # Semantic similarity (AI-based, understands tone/theme)
+    'year_proximity': 0.10,       # Release year/decade proximity
+    'origin_country': 0.08,       # Same production country
+    'popularity': 0.06,           # Similar popularity level
+    'content_rating': 0.03,       # Similar age rating
+    'number_of_seasons': 0.03     # Similar length
 }
 
 # Validate weights sum to 1.0
