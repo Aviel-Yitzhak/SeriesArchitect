@@ -82,4 +82,4 @@ if __name__ == "__main__":
 
     # 2. Maintain & Fix Existing Data:
     # run_maintenance_repair()
-    update_catalog_by_language(lang_code='ja', pages=1)
+    run_maintenance_repair()

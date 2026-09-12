@@ -136,7 +136,8 @@ def fetch_raw_data(tmdb_id):
             'title_en': data_en.get('name'),
             'overview': data_he.get('overview') or data_en.get('overview'),
             'popularity': data_he.get('popularity'),
-            'poster_path': data_he.get('poster_path'),
+            'poster_path': data_en.get('poster_path') or data_he.get('poster_path'),
+            'vote_average': data_en.get('vote_average'),
             'original_language': data_he.get('original_language'),
             'origin_country': origin_country,
             'status': final_status,
@@ -166,28 +167,31 @@ def save_to_db(data):
 
     # 1. Series Table (Upsert)
     query_series = """
-        INSERT INTO series (
-            tmdb_id, title_he, title_en, overview, popularity, poster_path,
-            original_language, origin_country, status, adult,
-            first_air_date, last_air_date, number_of_seasons, number_of_episodes, content_rating
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ON CONFLICT (tmdb_id) DO UPDATE SET
-            title_he = EXCLUDED.title_he,
-            title_en = EXCLUDED.title_en,
-            overview = EXCLUDED.overview,
-            popularity = EXCLUDED.popularity,
-            poster_path = EXCLUDED.poster_path,
-            status = EXCLUDED.status,
-            origin_country = EXCLUDED.origin_country,
-            number_of_seasons = EXCLUDED.number_of_seasons,
-            number_of_episodes = EXCLUDED.number_of_episodes,
-            content_rating = EXCLUDED.content_rating;
-    """
+            INSERT INTO series (
+                tmdb_id, title_he, title_en, overview, popularity, poster_path,
+                original_language, origin_country, status, adult,
+                first_air_date, last_air_date, number_of_seasons, number_of_episodes,
+                content_rating, vote_average
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (tmdb_id) DO UPDATE SET
+                title_he = EXCLUDED.title_he,
+                title_en = EXCLUDED.title_en,
+                overview = EXCLUDED.overview,
+                popularity = EXCLUDED.popularity,
+                poster_path = EXCLUDED.poster_path,
+                status = EXCLUDED.status,
+                origin_country = EXCLUDED.origin_country,
+                number_of_seasons = EXCLUDED.number_of_seasons,
+                number_of_episodes = EXCLUDED.number_of_episodes,
+                content_rating = EXCLUDED.content_rating,
+                vote_average = EXCLUDED.vote_average;
+        """
     execute_query(query_series, (
         data['tmdb_id'], data['title_he'], data['title_en'], data['overview'], data['popularity'],
         data['poster_path'], data['original_language'], data['origin_country'], data['status'],
         data['adult'], data['first_air_date'], data['last_air_date'],
-        data['number_of_seasons'], data['number_of_episodes'], data['content_rating']
+        data['number_of_seasons'], data['number_of_episodes'], data['content_rating'],
+        data['vote_average']
     ), fetch=False)
 
     # 2. Genres

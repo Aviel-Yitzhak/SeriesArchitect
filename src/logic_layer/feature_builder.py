@@ -119,12 +119,12 @@ def get_series_data(tmdb_id):
     """
     if tmdb_id in _SERIES_CACHE:
         return _SERIES_CACHE[tmdb_id]
-    
+
     query = """
         SELECT tmdb_id, title_en, overview, popularity, poster_path,
-               original_language, origin_country, status, adult,
-               first_air_date, last_air_date, number_of_seasons,
-               number_of_episodes, content_rating
+                original_language, origin_country, status, adult,
+                first_air_date, last_air_date, number_of_seasons,
+                number_of_episodes, content_rating, vote_average
         FROM series
         WHERE tmdb_id = %s
     """
@@ -133,7 +133,7 @@ def get_series_data(tmdb_id):
     
     if not result:
         return None
-    
+
     row = result[0]
     data = {
         'tmdb_id': row[0],
@@ -149,7 +149,8 @@ def get_series_data(tmdb_id):
         'last_air_date': row[10],
         'number_of_seasons': row[11],
         'number_of_episodes': row[12],
-        'content_rating': row[13]
+        'content_rating': row[13],
+        'vote_average': row[14]
     }
     
     _SERIES_CACHE[tmdb_id] = data

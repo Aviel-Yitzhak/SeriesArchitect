@@ -122,9 +122,9 @@ function openModal(series) {
         posterImg.alt = 'No image';
     }
 
-    // Rating (using popularity as proxy)
+        // Rating (real TMDB vote average)
     document.getElementById('modal-rating').textContent =
-        series.popularity ? `⭐ ${Math.min(10, (series.popularity / 10).toFixed(1))}/10` : '';
+        series.vote_average ? `⭐ ${series.vote_average.toFixed(1)}/10` : 'No rating yet';
 
     // Genres
     document.getElementById('modal-genres').textContent =
@@ -132,9 +132,9 @@ function openModal(series) {
 
     // Years
     const startYear = series.first_air_date ? series.first_air_date.substring(0, 4) : '?';
-    const endYear = series.last_air_date ? series.last_air_date.substring(0, 4) : 'Present';
+    //const endYear = series.last_air_date ? series.last_air_date.substring(0, 4) : 'Present';
     document.getElementById('modal-years').textContent =
-        `📅 ${startYear} - ${endYear}`;
+        `📅 ${startYear}`;
 
     // Status
     document.getElementById('modal-status').textContent =
